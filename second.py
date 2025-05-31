@@ -1,70 +1,67 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
-# ---- Generate Dataset ----
+# ---------------------------
+# ⚠️ DISCLAIMER
+# ---------------------------
+st.title("🌈 GAG ML CLASSIFIER: 'Is Homosexual?' (Totally Fake 🃏)")
+st.markdown("""
+> ⚠️ **DISCLAIMER**: This app is a parody.  
+> All data is randomly generated.  
+> The model is meaningless and should not be used seriously for any purpose.
+
+Enjoy responsibly.
+""")
+
+# ---------------------------
+# 🎲 Generate Random Dataset
+# ---------------------------
 @st.cache_data
-def generate_dataset():
-    X, y = make_classification(
-        n_samples=500,
-        n_features=5,
-        n_informative=3,
-        n_redundant=0,
-        n_classes=2,
-        random_state=42
-    )
-    columns = [f"Feature_{i+1}" for i in range(X.shape[1])]
-    df = pd.DataFrame(X, columns=columns)
-    df["Target"] = y
+def generate_fake_data(n_samples=500):
+    np.random.seed(42)
+    data = {
+        "Age": np.random.randint(18, 60, n_samples),
+        "Education Level": np.random.randint(1, 6, n_samples),  # 1 to 5
+        "Income Level": np.random.randint(2000, 12000, n_samples),
+        "Hours Online per Day": np.random.uniform(0, 12, n_samples).round(1),
+        "Satisfaction Score": np.random.randint(1, 11, n_samples),
+        "Is Homosexual": np.random.randint(0, 2, n_samples)
+    }
+    df = pd.DataFrame(data)
     return df
 
-df = generate_dataset()
+df = generate_fake_data()
 
-# ---- Prepare Training Data ----
-X = df.drop("Target", axis=1)
-y = df["Target"]
+# ---------------------------
+# 🧠 Train Model
+# ---------------------------
+X = df.drop("Is Homosexual", axis=1)
+y = df["Is Homosexual"]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# ---- Train Model ----
 model = RandomForestClassifier()
 model.fit(X_train, y_train)
 
-# ---- Streamlit App UI ----
-st.title("🧠 Interactive ML Classifier App")
-st.markdown("Adjust the sliders to input feature values and see the model prediction in real-time.")
+# ---------------------------
+# 🎛️ User Input via Sidebar
+# ---------------------------
+st.sidebar.header("Input Your (Totally Random) Info")
 
-# ---- Sidebar Input ----
-st.sidebar.header("Input Features")
+def user_input():
+    age = st.sidebar.slider("Age", 18, 60, 30)
+    edu = st.sidebar.slider("Education Level (1-Low to 5-High)", 1, 5, 3)
+    income = st.sidebar.slider("Income Level", 2000, 12000, 5000)
+    online = st.sidebar.slider("Hours Online per Day", 0.0, 12.0, 4.0)
+    satisfaction = st.sidebar.slider("Satisfaction Score (1–10)", 1, 10, 5)
+    return pd.DataFrame([{
+        "Age": age,
+        "Education Level": edu,
+        "Income Level": income,
+        "Hours Online per Day": online,
+        "Satisfaction Score": satisfaction
+    }])
 
-def user_input_features():
-    input_data = {}
-    for column in X.columns:
-        col_min = float(df[column].min())
-        col_max = float(df[column].max())
-        col_mean = float(df[column].mean())
-        input_data[column] = st.sidebar.slider(column, col_min, col_max, col_mean)
-    return pd.DataFrame([input_data])
-
-input_df = user_input_features()
-
-# ---- Make Prediction ----
-prediction = model.predict(input_df)[0]
-prediction_proba = model.predict_proba(input_df)[0]
-
-# ---- Display Results ----
-st.subheader("Prediction")
-st.write(f"**Predicted Class:** {prediction}")
-st.write("**Prediction Probability:**")
-st.write({f"Class {i}": f"{prob*100:.2f}%" for i, prob in enumerate(prediction_proba)})
-
-# ---- Dataset Preview ----
-with st.expander("📊 Preview Synthetic Dataset"):
-    st.dataframe(df.head())
-
-# ---- Model Performance ----
-st.subheader("Model Accuracy")
-accuracy = model.score(X_test, y_test)
-st.write(f"**Accuracy on Test Set:** {accuracy:.2%}")
+input_df = user_input
