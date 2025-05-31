@@ -64,4 +64,23 @@ def user_input():
         "Satisfaction Score": satisfaction
     }])
 
-input_df = user_input
+input_df = user_input()
+
+# ---------------------------
+# 🔮 Make Prediction
+# ---------------------------
+prediction = model.predict(input_df)[0]
+proba = model.predict_proba(input_df)[0][prediction]
+
+# ---------------------------
+# 📢 Results
+# ---------------------------
+st.subheader("Prediction Result")
+st.write(f"🔍 **Model Guess:** `{ 'Homosexual' if prediction == 1 else 'Not Homosexual' }`")
+st.write(f"🤔 **Confidence:** `{proba:.2%}`")
+
+with st.expander("📊 Peek at Fake Dataset"):
+    st.dataframe(df.head())
+
+st.subheader("Model Accuracy")
+st.write(f"🎯 Test Accuracy: **{model.score(X_test, y_test):.2%}** (on completely random data 🤷)")
